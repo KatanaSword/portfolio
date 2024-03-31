@@ -8,14 +8,15 @@ cloudinary.config({
 });
 
 const uplodeOnCloudinary = async (localFilePath) => {
-  if (localFilePath) {
+  try {
+    if (!localFilePath) return null;
     const response = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "image",
     });
-    fs.unlink(localFilePath);
-    return response.url;
-  } else {
-    fs.unlink(localFilePath);
+    fs.unlinkSync(localFilePath);
+    return response;
+  } catch (error) {
+    fs.unlinkSync(localFilePath);
     return null;
   }
 };
