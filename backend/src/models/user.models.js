@@ -1,13 +1,15 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import { USER_TEMPORARY_TOKEN_EXPIRY } from "../constants.js";
 
 const userSchema = new Schema(
   {
     fullName: {
       type: String,
       required: true,
-      lowercase: true,
+      trim: true,
       index: true,
     },
     email: {
@@ -30,17 +32,26 @@ const userSchema = new Schema(
       required: [true, "Password is required"],
     },
     avatar: {
-      type: String,
+      type: {
+        url: String,
+      },
+      default: {
+        url: "https://via.placeholder.com/200x200.png",
+      },
+      required: true,
     },
     refreshToken: {
       type: String,
-      required: true,
+    },
+    forgotPasswordToken: {
+      type: String,
+    },
+    forgotPasswordExpiry: {
+      type: Date,
     },
   },
   { timestamps: true }
 );
-
-export const User = mongoose.model("User", userSchema);
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
@@ -49,11 +60,11 @@ userSchema.pre("save", async function (next) {
 });
 
 userSchema.methods.isPasswordCorrect = async function (password) {
-  await bcrypt.compare(password, this.password);
+  return await bcrypt.compare(password, this.password);
 };
 
 userSchema.methods.generateAccessToken = function () {
-  jwt.sign(
+  return jwt.sign(
     {
       userId: this._id,
       fullName: this.fullName,
@@ -62,19 +73,34 @@ userSchema.methods.generateAccessToken = function () {
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
-      expiry: process.env.ACCESS_TOKEN_EXPIRY,
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
     }
   );
 };
 
 userSchema.methods.generateRefreshToken = function () {
-  jwt.sign(
+  return jwt.sign(
     {
       userId: this._id,
     },
     process.env.REFRESH_TOKEN_SECRET,
     {
-      expiry: process.env.REFRESH_TOKEN_EXPIRY,
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
     }
   );
 };
+
+userSchema.methods.generateTemporaryToken = function () {
+  const unHashedToken = crypto.randomBytes(20).toString("hex");
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(unHashedToken)
+    .digest("hex");
+
+  const tokenExpiry = Date.now() + USER_TEMPORARY_TOKEN_EXPIRY;
+
+  return { unHashedToken, hashedToken, tokenExpiry };
+};
+
+export const User = mongoose.model("User", userSchema);
