@@ -24,7 +24,10 @@ const verifyJWT = asyncHandler(async (req, _, next) => {
     req.user = user;
     next();
   } catch (error) {
-    throw new apiError(401, "Missing or invalid access token");
+    throw new apiError(
+      401,
+      error?.message || "Missing or invalid access token"
+    );
   }
 });
 
