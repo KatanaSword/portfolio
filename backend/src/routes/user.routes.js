@@ -11,7 +11,7 @@ import {
   registerUser,
   resetPassword,
   updateAvatar,
-} from "../controllers/auth.controllers.js";
+} from "../controllers/user.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
 import { upload } from "../middlewares/multer.middlewares.js";
 
