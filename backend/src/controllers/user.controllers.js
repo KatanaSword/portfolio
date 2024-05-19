@@ -1,7 +1,10 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { uplodeOnCloudinary } from "../utils/cloudinary.js";
+import {
+  uplodeOnCloudinary,
+  deleteFromCloudinary,
+} from "../utils/cloudinary.js";
 import { sendEmail, forgotPasswordMailgenContent } from "../utils/mail.js";
 import { User } from "../models/user.models.js";
 import jwt from "jsonwebtoken";
@@ -345,20 +348,26 @@ const updateAvatar = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Avatar file is missing");
   }
 
-  const avatar = await uplodeOnCloudinary(avatarLocalPath);
-  if (!avatar.url) {
+  const avatar = await uplodeOnCloudinary(avatarLocalPath, "portfolio/user");
+  if (!avatar) {
     throw new ApiError(
-      400,
+      500,
       "Failed to upload avatar. Please ensure the file format is supported."
     );
   }
 
+  const user = await User.findById(req.user?._id);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
   const updateAvatar = await User.findByIdAndUpdate(
-    req.user?._id,
+    user,
     {
       $set: {
         avatar: {
           url: avatar.url,
+          publicId: avatar.public_id,
         },
       },
     },
@@ -370,6 +379,9 @@ const updateAvatar = asyncHandler(async (req, res) => {
       "Updating avatar failed due to an unexpected server error. Please try again later."
     );
   }
+
+  const avatarPublicId = user.avatar.publicId;
+  await deleteFromCloudinary(avatarPublicId);
 
   return res
     .status(200)
