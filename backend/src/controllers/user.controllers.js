@@ -40,10 +40,10 @@ const registerUser = asyncHandler(async (req, res) => {
     );
   }
 
-  const alreadyRegister = await User.findOne({
+  const userExist = await User.findOne({
     $or: [{ email }, { username }],
   });
-  if (alreadyRegister) {
+  if (userExist) {
     throw new ApiError(
       409,
       "The account already exists. Please use a different username and email to sign up."
