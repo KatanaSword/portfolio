@@ -1,21 +1,38 @@
 import mongoose, { Schema } from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const projectSchema = new Schema(
   {
     name: {
       type: String,
       required: true,
+      trim: true,
     },
     description: {
       type: String,
       required: true,
+      trim: true,
     },
     images: {
-      type: String,
+      type: [
+        {
+          url: String,
+          publicId: String,
+        },
+      ],
+      default: [],
       required: true,
     },
-    link: {
-      type: String,
+    github: {
+      type: {
+        url: String,
+      },
+      required: true,
+    },
+    website: {
+      type: {
+        url: String,
+      },
       required: true,
     },
     owner: {
@@ -25,5 +42,7 @@ const projectSchema = new Schema(
   },
   { timestamps: true }
 );
+
+projectSchema.plugin(mongooseAggregatePaginate);
 
 export const Project = mongoose.model("Project", projectSchema);
