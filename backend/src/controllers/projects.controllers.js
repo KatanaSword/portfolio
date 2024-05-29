@@ -44,15 +44,14 @@ const createProjects = asyncHandler(async (req, res) => {
   }
 
   const imagesLocalPath = req.files["images"];
-  console.log(imagesLocalPath);
   if (!imagesLocalPath) {
     throw new ApiError(400, "Project images is missing");
   }
 
   const projectImages = [];
   for (let i = 0; i < imagesLocalPath.length; i++) {
-    const localPath = imagesLocalPath[i].path;
-    const images = await uplodeOnCloudinary(localPath, "portfolio/projects");
+    const imagePath = imagesLocalPath[i].path;
+    const images = await uplodeOnCloudinary(imagePath, "portfolio/projects");
     const newProjectImages = { url: images.url, publicId: images.public_id };
     projectImages.push(newProjectImages);
   }
@@ -152,8 +151,8 @@ const updateImages = asyncHandler(async (req, res) => {
 
   const projectImages = [];
   for (let i = 0; i < imagesLocalPath.length; i++) {
-    const localPath = imagesLocalPath[i].path;
-    const images = await uplodeOnCloudinary(localPath, "portfolio/projects");
+    const imagePath = imagesLocalPath[i].path;
+    const images = await uplodeOnCloudinary(imagePath, "portfolio/projects");
     const newProjectImages = { url: images.url, publicId: images.public_id };
     projectImages.push(newProjectImages);
   }
